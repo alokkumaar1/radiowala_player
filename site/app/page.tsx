@@ -1,6 +1,7 @@
 import RadioProvider from '@/components/RadioProvider'
 import Station from '@/components/Station'
 import SongIndex from '@/components/SongIndex'
+import LocalPlayer from '@/components/LocalPlayer'
 import MiniPlayer from '@/components/MiniPlayer'
 import PWAInstallPrompt from '@/components/PWAInstallPrompt'
 import { songs } from '@/data/songs'
@@ -113,6 +114,9 @@ export default function Home() {
 
         {/* ── song index ──────────────────────────────────────────────────── */}
         <SongIndex />
+
+        {/* ── local player ────────────────────────────────────────────────── */}
+        <LocalPlayer />
 
         {/* ── footer ──────────────────────────────────────────────────────── */}
         <footer className="border-t border-brass/12 bg-walnut/20 px-4 py-12 sm:px-5 sm:py-14">
