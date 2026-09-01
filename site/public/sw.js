@@ -29,7 +29,8 @@ const PRECACHE = [
   '/hero-1024.webp',
 ]
 
-const CACHEABLE = /\.(?:js|css|woff2?|png|jpe?g|webp|svg|ico|webmanifest)$/i
+const CACHEABLE = /\.(?:js|css|woff2?|png|jpe?g|webp|svg|ico|webmanifest|mp3)$/i
+const LOCAL_SONGS = /^\/songs\//
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -96,10 +97,16 @@ self.addEventListener('fetch', (event) => {
 
   if (request.method !== 'GET') return
 
-  // Range requests are how media is streamed. Never intercept them.
-  if (request.headers.has('range')) return
-
   const url = new URL(request.url)
+
+  // Local MP3 songs: cache with range request support for streaming
+  if (LOCAL_SONGS.test(url.pathname)) {
+    event.respondWith(cacheFirst(request))
+    return
+  }
+
+  // Range requests for YouTube/external: never intercept them.
+  if (request.headers.has('range')) return
 
   // YouTube, its CDNs, anything else third party: not ours to store.
   if (url.origin !== self.location.origin) return

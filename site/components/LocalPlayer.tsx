@@ -10,14 +10,7 @@ export default function LocalPlayer() {
   const [progress, setProgress] = useState(0)
   const [keepAwake, setKeepAwake] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
-  const { supported: wakeLockSupported, held: wakeLockHeld } = { supported: false, held: false }
-
-  // Try to detect Wake Lock support
-  useEffect(() => {
-    if (typeof navigator !== 'undefined' && 'wakeLock' in navigator) {
-      // Wake lock is available
-    }
-  }, [])
+  const { supported: wakeLockSupported, held: wakeLockHeld } = useWakeLock(keepAwake && isPlaying)
 
   const current = localSongs[currentIndex]
 
