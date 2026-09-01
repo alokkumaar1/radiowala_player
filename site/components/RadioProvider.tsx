@@ -15,6 +15,7 @@ import { FATAL_YT_ERRORS, loadYouTubeApi, type YTPlayer } from '@/lib/youtube'
 import { useMediaSession } from '@/lib/useMediaSession'
 import { useWakeLock } from '@/lib/useWakeLock'
 import { loadSession, saveSession } from '@/lib/session'
+import { liveRadio, streamingUrl, useLiveRadioStatus } from '@/lib/liveRadio'
 
 /**
  * One playback engine, shared. The cabinet player, the mobile bottom bar and
@@ -120,6 +121,21 @@ export default function RadioProvider({ children }: { children: React.ReactNode 
 
   const current = queue[index]
   const rotation = rotationKey ? rotationByKey(rotationKey) : null
+  const liveStreamUrl = useMemo(() => streamingUrl(), [])
+  const liveStatus = useLiveRadioStatus()
+
+  useEffect(() => {
+    if (!liveStreamUrl) return
+    liveRadio.setStreamUrl(liveStreamUrl)
+  }, [liveStreamUrl])
+
+  useEffect(() => {
+    if (!liveStreamUrl) return
+    setPlaying(liveStatus.playing)
+    setReady(liveStatus.ready)
+    if (liveStatus.error) setNotice(liveStatus.error)
+    else if (playing && !liveStatus.playing) setNotice(null)
+  }, [liveStreamUrl, liveStatus])
 
   /* ── restore, or tune to whatever is live in India ───────────────────── */
   useEffect(() => {
@@ -326,21 +342,35 @@ export default function RadioProvider({ children }: { children: React.ReactNode 
 
   /* ── transport ───────────────────────────────────────────────────────── */
   const play = useCallback(() => {
+    if (liveStreamUrl) {
+      setEngaged(true)
+      setNotice(null)
+      liveRadio.setStreamUrl(liveStreamUrl)
+      void liveRadio.play()
+      setPlaying(true)
+      return
+    }
+
     const p = api()
     if (!p) return
     setEngaged(true)
     if (!startedRef.current) {
       startedRef.current = true
-      // The first play has to inherit the user gesture. loadVideoById does;
-      // cue-then-play does not on mobile Safari.
       const song = queue[index]
       if (song) p.loadVideoById({ videoId: song.youtubeId, startSeconds: elapsed || undefined })
       return
     }
     p.playVideo()
-  }, [api, queue, index, elapsed])
+  }, [api, queue, index, elapsed, liveStreamUrl])
 
-  const pause = useCallback(() => api()?.pauseVideo(), [api])
+  const pause = useCallback(() => {
+    if (liveStreamUrl) {
+      liveRadio.pause()
+      setPlaying(false)
+      return
+    }
+    api()?.pauseVideo()
+  }, [api, liveStreamUrl])
 
   const toggle = useCallback(() => {
     if (playing) pause()
