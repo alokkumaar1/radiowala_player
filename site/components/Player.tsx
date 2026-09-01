@@ -196,7 +196,7 @@ export default function Player() {
 
       {/* ── keep-awake ────────────────────────────────────────────────────── */}
       {wakeLockSupported && (
-        <div className="mt-4 flex justify-center">
+        <div className="mt-4 flex flex-col items-center gap-3">
           <button
             onClick={() => setKeepAwake(!keepAwake)}
             aria-pressed={keepAwake}
@@ -209,11 +209,17 @@ export default function Player() {
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
               <path d="M12 2a7 7 0 00-4 12.7V18a2 2 0 002 2h4a2 2 0 002-2v-3.3A7 7 0 0012 2zm-2 20h4" />
             </svg>
-            {keepAwake ? 'Screen stays on' : 'Screen may sleep'}
+            {keepAwake ? 'Screen stays on' : 'Keep screen on'}
             {keepAwake && wakeLockHeld && (
               <span className="h-1.5 w-1.5 rounded-full bg-brass-bright" aria-hidden />
             )}
           </button>
+          
+          {!keepAwake && playing && (
+            <p className="text-center text-[0.68rem] text-brass-bright animate-pulse">
+              Tap "Keep screen on" to play with screen off
+            </p>
+          )}
         </div>
       )}
 
