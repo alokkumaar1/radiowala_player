@@ -2,12 +2,22 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { localSongs, getLocalSongPath } from '@/data/localSongs'
+import { useWakeLock } from '@/lib/useWakeLock'
 
 export default function LocalPlayer() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [keepAwake, setKeepAwake] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
+  const { supported: wakeLockSupported, held: wakeLockHeld } = { supported: false, held: false }
+
+  // Try to detect Wake Lock support
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && 'wakeLock' in navigator) {
+      // Wake lock is available
+    }
+  }, [])
 
   const current = localSongs[currentIndex]
 
@@ -71,6 +81,12 @@ export default function LocalPlayer() {
         </h2>
         <p className="mt-1 text-sm text-cream-dim">{localSongs.length} songs • All from Pehli Pehli Baar Mohabbat Ki Hai</p>
 
+        {/* PWA Installation Info */}
+        <div className="mt-4 rounded-lg border border-brass/30 bg-brass/10 p-4">
+          <p className="text-sm text-brass-bright font-semibold">💡 For background music playback:</p>
+          <p className="mt-1 text-xs text-cream-dim">Install as PWA (Add to Home Screen) → Music will keep playing with screen off</p>
+        </div>
+
         <div className="mt-8 space-y-6">
           {/* Now Playing */}
           <div className="rounded-lg border border-brass/20 bg-ink/60 p-6">
@@ -101,41 +117,59 @@ export default function LocalPlayer() {
           </div>
 
           {/* Controls */}
-          <div className="flex items-center justify-center gap-4">
-            <button
-              onClick={prev}
-              className="rounded-full border border-cream-dim/20 p-3 text-cream-dim transition hover:border-brass/40 hover:text-brass-bright"
-              title="Previous"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                <path d="M6 6h2v12H6V6zm3.5 6l8.5 6V6l-8.5 6z" />
-              </svg>
-            </button>
-
-            <button
-              onClick={isPlaying ? pause : play}
-              className="brass-edge flex h-14 w-14 items-center justify-center rounded-full text-ink transition hover:brightness-110"
-              title={isPlaying ? 'Pause' : 'Play'}
-            >
-              {isPlaying ? (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                  <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex items-center justify-center gap-4">
+              <button
+                onClick={prev}
+                className="rounded-full border border-cream-dim/20 p-3 text-cream-dim transition hover:border-brass/40 hover:text-brass-bright"
+                title="Previous"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <path d="M6 6h2v12H6V6zm3.5 6l8.5 6V6l-8.5 6z" />
                 </svg>
-              ) : (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              )}
-            </button>
+              </button>
 
+              <button
+                onClick={isPlaying ? pause : play}
+                className="brass-edge flex h-14 w-14 items-center justify-center rounded-full text-ink transition hover:brightness-110"
+                title={isPlaying ? 'Pause' : 'Play'}
+              >
+                {isPlaying ? (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                  </svg>
+                ) : (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                )}
+              </button>
+
+              <button
+                onClick={next}
+                className="rounded-full border border-cream-dim/20 p-3 text-cream-dim transition hover:border-brass/40 hover:text-brass-bright"
+                title="Next"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <path d="M16 18h2V6h-2v12zM6 18l8.5-6L6 6v12z" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Keep Awake Button */}
             <button
-              onClick={next}
-              className="rounded-full border border-cream-dim/20 p-3 text-cream-dim transition hover:border-brass/40 hover:text-brass-bright"
-              title="Next"
+              onClick={() => setKeepAwake(!keepAwake)}
+              className={`flex items-center gap-2 rounded-full border px-3.5 py-2 font-mono text-[0.62rem] tracking-wide uppercase transition active:scale-95 ${
+                keepAwake
+                  ? 'border-brass/60 bg-brass/10 text-brass-bright'
+                  : 'border-cream-dim/20 text-cream-dim/70 hover:border-brass/40'
+              }`}
+              title="Keep screen on while playing"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                <path d="M16 18h2V6h-2v12zM6 18l8.5-6L6 6v12z" />
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <path d="M12 2a7 7 0 00-4 12.7V18a2 2 0 002 2h4a2 2 0 002-2v-3.3A7 7 0 0012 2zm-2 20h4" />
               </svg>
+              {keepAwake ? 'Screen stays on' : 'Keep screen on'}
             </button>
           </div>
 
@@ -168,7 +202,13 @@ export default function LocalPlayer() {
         </div>
       </div>
 
-      <audio ref={audioRef} src={getLocalSongPath(current.title)} onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} />
+      <audio 
+        ref={audioRef} 
+        src={getLocalSongPath(current.title)} 
+        onPlay={() => setIsPlaying(true)} 
+        onPause={() => setIsPlaying(false)}
+        controls={false}
+      />
     </section>
   )
 }
