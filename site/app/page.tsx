@@ -2,6 +2,7 @@ import RadioProvider from '@/components/RadioProvider'
 import Station from '@/components/Station'
 import SongIndex from '@/components/SongIndex'
 import MiniPlayer from '@/components/MiniPlayer'
+import PWAInstallPrompt from '@/components/PWAInstallPrompt'
 import { songs } from '@/data/songs'
 import { rotations } from '@/lib/rotations'
 
@@ -171,6 +172,9 @@ export default function Home() {
       {/* Phone-only docked transport. Inside the provider, so it drives the same
           session as the cabinet rather than a second one. */}
       <MiniPlayer />
+
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </RadioProvider>
   )
 }
