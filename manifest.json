@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "Radio Wala",
+  "description": "A 1970s Indian electronics shop, the radio on the top shelf still playing old Hindi film songs.",
+  "version": "2.0",
+  "icons": {
+    "16": "icons/radio-wala-16.png",
+    "48": "icons/radio-wala-48.png",
+    "128": "icons/radio-wala-128.png"
+  },
+  "theme": {
+    "images": {
+      "theme_ntp_background": "images/radio-wala-3440x1204.png"
+    },
+    "colors": {
+      "background_tab": [43, 29, 19],
+      "background_tab_inactive": [56, 40, 28],
+      "background_tab_incognito": [26, 22, 18],
+      "background_tab_incognito_inactive": [42, 36, 30],
+      "bookmark_text": [245, 233, 214],
+      "frame": [20, 16, 12],
+      "frame_inactive": [43, 29, 19],
+      "frame_incognito": [24, 20, 16],
+      "frame_incognito_inactive": [40, 34, 28],
+      "ntp_background": [20, 16, 12],
+      "ntp_header": [245, 233, 214],
+      "ntp_link": [240, 181, 69],
+      "ntp_text": [245, 233, 214],
+      "tab_background_text": [201, 183, 153],
+      "tab_background_text_inactive": [180, 164, 137],
+      "tab_background_text_incognito": [190, 182, 170],
+      "tab_background_text_incognito_inactive": [170, 163, 152],
+      "tab_text": [245, 233, 214],
+      "toolbar": [61, 42, 28],
+      "toolbar_button_icon": [240, 181, 69],
+      "toolbar_text": [245, 233, 214]
+    },
+    "properties": {
+      "ntp_background_alignment": "top",
+      "ntp_background_repeat": "no-repeat",
+      "ntp_logo_alternate": 1
+    }
+  }
+}

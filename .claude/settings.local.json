@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /tmp)",
+      "Bash(curl -sL --max-time 25 \"https://www.deluxesaloon.space/_next/static/immutable/chunks/25vsnq35pict1.css\" -o ds.css)",
+      "Bash(grep -oE 'youtube[^\"\\\\\\\\]{0,40}|iframe|<section|<h[123][^>]*>|LIVE|now playing|aria-label=\\\\\\\\?\"[^\"\\\\\\\\]{0,40}' ds.html)",
+      "Bash(npm -v)",
+      "Bash(npx --version)",
+      "Bash(curl -s --max-time 15 \"https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=NmugSMBh_iI&format=json\")",
+      "Bash(curl -s --max-time 15 \"https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=ZZZZZZZZZZZ&format=json\" -o /dev/null -w \"%{http_code}\\\\n\")",
+      "Bash(curl -s --max-time 20 -H \"Accept-Language: en-US\" \"https://www.youtube.com/results?search_query=Chura+Liya+Hai+Tumne+Yaadon+Ki+Baaraat+1973+full+song\" -o yt.html)",
+      "Bash(grep -oE '\"title\":\\\\{\"runs\":\\\\[\\\\{\"text\":\"[^\"]{0,60}' yt.html)",
+      "Bash(npm install *)",
+      "Bash(node -e \"console.log\\(require\\('./package.json'\\).dependencies, require\\('./package.json'\\).devDependencies\\)\")",
+      "Bash(mkdir -p data)",
+      "Bash(node scripts/build-songs.mjs)",
+      "Bash(node scripts/build-art.mjs)",
+      "Bash(npm run *)",
+      "Bash(node -e \"console.log\\('ts now:', require\\('typescript'\\).version\\)\")",
+      "Bash(sed -i \"s/export type RotationKey = 'subah' | 'dopahar' | 'shaam' | 'highway' | 'desh'/export type RotationKey = 'udit' | 'sanu' | 'mustafa' | 'raat' | 'purane'/\" scripts/build-songs.mjs)",
+      "Bash(sed -i \"s/for \\(const key of \\\\['subah', 'dopahar', 'shaam', 'highway', 'desh'\\\\]\\)/for \\(const key of ['udit', 'sanu', 'mustafa', 'raat', 'purane']\\)/\" scripts/build-songs.mjs)",
+      "Bash(node scripts/check-embeddable.mjs)",
+      "Bash(awk '{print $5, $9}')",
+      "Bash(grep -v \"swc-win32\\\\|not a valid Win32\\\\|^\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\?\")",
+      "Bash(node -e ' *)",
+      "Bash(node scripts/check-head.mjs)",
+      "Bash(node -e \"const h=require\\('fs'\\).readFileSync\\('out/index.html','utf8'\\); \\(h.match\\(/<meta[^>]*>/g\\)||[]\\).filter\\(t=>/capable|web-app|status-bar|theme|viewport/.test\\(t\\)\\).forEach\\(t=>console.log\\(t\\)\\)\")"
+    ]
+  }
+}

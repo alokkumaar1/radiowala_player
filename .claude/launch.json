@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "radio-wala",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "site",
+      "port": 3000
+    },
+    {
+      "name": "radio-wala-prod",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "serve"],
+      "cwd": "site",
+      "port": 4173
+    }
+  ]
+}
