@@ -44,27 +44,11 @@ export function normalizeSong(input: Partial<Song>): Song | null {
 }
 
 export function readCustomSongs(): Song[] {
-  if (typeof window === 'undefined') return []
-
-  try {
-    const raw = window.localStorage.getItem(CUSTOM_SONGS_KEY)
-    if (!raw) return []
-
-    const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
-
-    return parsed.flatMap((item) => {
-      const song = normalizeSong(item as Partial<Song>)
-      return song ? [song] : []
-    })
-  } catch {
-    return []
-  }
+  return []
 }
 
 export function writeCustomSongs(songs: Song[]): void {
   if (typeof window === 'undefined') return
-  window.localStorage.setItem(CUSTOM_SONGS_KEY, JSON.stringify(songs))
   window.dispatchEvent(new CustomEvent('radio-wala:songs-updated'))
 }
 
@@ -72,16 +56,43 @@ export function useSongCatalog(): Song[] {
   const [customSongs, setCustomSongs] = useState<Song[]>([])
 
   useEffect(() => {
-    const sync = () => setCustomSongs(readCustomSongs())
+    let cancelled = false
+
+    const sync = async () => {
+      try {
+        const response = await fetch('/api/stations', { cache: 'no-store' })
+        if (!response.ok) {
+          if (!cancelled) setCustomSongs([])
+          return
+        }
+
+        const stations = await response.json()
+        if (!Array.isArray(stations)) {
+          if (!cancelled) setCustomSongs([])
+          return
+        }
+
+        const next = stations
+          .filter((station) => station && station.active !== false)
+          .flatMap((station) => {
+            const song = normalizeSong(station as Partial<Song>)
+            return song ? [song] : []
+          })
+
+        if (!cancelled) setCustomSongs(next)
+      } catch {
+        if (!cancelled) setCustomSongs([])
+      }
+    }
+
     sync()
 
     const onUpdate = () => sync()
     window.addEventListener('radio-wala:songs-updated', onUpdate)
-    window.addEventListener('storage', onUpdate)
 
     return () => {
+      cancelled = true
       window.removeEventListener('radio-wala:songs-updated', onUpdate)
-      window.removeEventListener('storage', onUpdate)
     }
   }, [])
 

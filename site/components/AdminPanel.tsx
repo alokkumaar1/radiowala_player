@@ -4,10 +4,6 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { songs as seededSongs, type RotationKey } from '@/data/songs'
 import { normalizeSong, useSongCatalog, writeCustomSongs } from '@/lib/songCatalog'
 
-const ADMIN_USERNAME = process.env.NEXT_PUBLIC_ADMIN_USERNAME ?? '9006808449'
-const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? '@Alok9006808449'
-const ADMIN_SESSION_KEY = 'radio-wala-admin-auth'
-
 const initialForm = {
   title: '',
   film: '',
@@ -19,37 +15,93 @@ const initialForm = {
 export default function AdminPanel() {
   const [form, setForm] = useState(initialForm)
   const [status, setStatus] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [isUnlocked, setIsUnlocked] = useState(false)
+  const [stations, setStations] = useState<any[]>([])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    setIsUnlocked(window.sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true')
+    if (typeof document === 'undefined') return
+    setIsUnlocked(document.cookie.includes('radio-wala-admin=1'))
   }, [])
+
+  useEffect(() => {
+    if (!isUnlocked) return
+
+    const loadStations = async () => {
+      try {
+        const response = await fetch('/api/stations', { cache: 'no-store' })
+        if (!response.ok) return
+        const data = await response.json()
+        setStations(Array.isArray(data) ? data : [])
+      } catch {
+        setStations([])
+      }
+    }
+
+    loadStations()
+  }, [isUnlocked])
 
   const customSongs = useSongCatalog().filter(
     (song) => !seededSongs.some((seed) => seed.slug === song.slug)
   )
 
-  const unlock = (event: FormEvent) => {
+  const unlock = async (event: FormEvent) => {
     event.preventDefault()
 
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      window.sessionStorage.setItem(ADMIN_SESSION_KEY, 'true')
+    setLoading(true)
+    setStatus('Checking admin credentials...')
+    setError('')
+
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(data?.error || 'Incorrect username or password.')
+      }
+
       setIsUnlocked(true)
       setStatus('Access granted.')
-      return
+      setError('')
+    } catch (caught) {
+      setStatus('Incorrect username or password. Only the admin can add songs.')
+      setError(caught instanceof Error ? caught.message : 'Access denied.')
+    } finally {
+      setLoading(false)
     }
-
-    setStatus('Incorrect username or password. Only the admin can add songs.')
   }
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
 
     if (!isUnlocked) {
       setStatus('Please unlock the admin panel first.')
+      setError('Admin access required.')
+      return
+    }
+
+    const title = form.title.trim().toLowerCase()
+    const film = form.film.trim().toLowerCase()
+    const year = Number(form.year)
+
+    const duplicate = customSongs.some(
+      (song) =>
+        song.title.toLowerCase() === title &&
+        song.film.toLowerCase() === film &&
+        song.year === year
+    )
+
+    if (duplicate) {
+      setStatus('This song already exists in the station.')
+      setError('Duplicate submission blocked.')
       return
     }
 
@@ -61,23 +113,43 @@ export default function AdminPanel() {
 
     if (!song) {
       setStatus('Add a title, film, year, band, and a valid YouTube link or video ID.')
+      setError('Validation failed.')
       return
     }
 
-    const existing = JSON.parse(
-      typeof window === 'undefined' ? '[]' : window.localStorage.getItem('radio-wala-custom-songs') ?? '[]'
-    )
+    setLoading(true)
+    setStatus('Saving song...')
+    setError('')
 
-    const cleaned = Array.isArray(existing)
-      ? existing.filter((item: any) => {
-          const other = normalizeSong(item as any)
-          return !(other && (other.slug === song.slug || (other.title === song.title && other.film === song.film && other.year === song.year)))
-        })
-      : []
+    try {
+      const response = await fetch('/api/stations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(song),
+      })
 
-    writeCustomSongs([...cleaned, song])
-    setForm(initialForm)
-    setStatus(`Saved: ${song.title} from ${song.film} is now in the station.`)
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(data?.error || 'Unable to save station.')
+      }
+
+      setForm(initialForm)
+      setStatus(`Saved: ${song.title} from ${song.film} is now in the station.`)
+      setError('')
+      writeCustomSongs([])
+
+      const refreshed = await fetch('/api/stations', { cache: 'no-store' })
+      if (refreshed.ok) {
+        const next = await refreshed.json()
+        setStations(Array.isArray(next) ? next : [])
+      }
+    } catch (caught) {
+      setStatus('Unable to save the station right now.')
+      setError(caught instanceof Error ? caught.message : 'Request failed.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (!isUnlocked) {
@@ -116,12 +188,14 @@ export default function AdminPanel() {
 
             <button
               type="submit"
+              disabled={loading}
               className="brass-edge inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-bold text-ink transition hover:brightness-110"
             >
-              Unlock admin panel
+              {loading ? 'Checking...' : 'Unlock admin panel'}
             </button>
 
             {status && <p className="text-sm text-brass-bright">{status}</p>}
+            {error && <p className="text-sm text-red-300">{error}</p>}
           </form>
         </div>
       </section>
@@ -144,12 +218,13 @@ export default function AdminPanel() {
 
           <button
             type="button"
-            onClick={() => {
-              window.sessionStorage.removeItem(ADMIN_SESSION_KEY)
+            onClick={async () => {
+              await fetch('/api/admin/logout', { method: 'POST' })
               setIsUnlocked(false)
               setUsername('')
               setPassword('')
               setStatus('Logged out.')
+              setError('')
             }}
             className="rounded-full border border-cream-dim/18 px-3 py-1.5 font-mono text-[0.62rem] tracking-[0.14em] text-cream-dim uppercase transition hover:border-brass/50 hover:text-brass-bright"
           >
@@ -221,9 +296,10 @@ export default function AdminPanel() {
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <button
                 type="submit"
+                disabled={loading}
                 className="brass-edge inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-bold text-ink transition hover:brightness-110"
               >
-                Add song
+                {loading ? 'Saving...' : 'Add song'}
               </button>
 
               <span className="font-mono text-[0.62rem] tracking-[0.16em] text-cream-dim uppercase">
@@ -232,6 +308,7 @@ export default function AdminPanel() {
             </div>
 
             {status && <p className="mt-4 text-sm text-brass-bright">{status}</p>}
+            {error && <p className="mt-2 text-sm text-red-300">{error}</p>}
           </form>
 
           <div className="rounded-2xl border border-brass/20 bg-walnut/25 p-4 sm:p-5">
@@ -239,10 +316,10 @@ export default function AdminPanel() {
               Saved songs
             </p>
 
-            {customSongs.length ? (
+            {stations.length || customSongs.length ? (
               <ul className="mt-4 space-y-2.5 text-sm text-cream-dim">
-                {customSongs.map((song) => (
-                  <li key={song.slug} className="rounded-lg border border-cream-dim/10 bg-ink/30 p-2.5">
+                {(stations.length ? stations : customSongs).map((song: any) => (
+                  <li key={song.slug || song.id} className="rounded-lg border border-cream-dim/10 bg-ink/30 p-2.5">
                     <p className="font-medium text-cream">{song.title}</p>
                     <p className="mt-0.5 text-[0.76rem] text-cream-dim/80">
                       {song.film} · {song.year} · {song.rotation}
