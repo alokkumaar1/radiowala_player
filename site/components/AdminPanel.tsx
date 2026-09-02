@@ -1,8 +1,12 @@
 'use client'
 
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
 import { songs as seededSongs, type RotationKey } from '@/data/songs'
 import { normalizeSong, useSongCatalog, writeCustomSongs } from '@/lib/songCatalog'
+
+const ADMIN_USERNAME = process.env.NEXT_PUBLIC_ADMIN_USERNAME ?? ''
+const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? ''
+const ADMIN_SESSION_KEY = 'radio-wala-admin-auth'
 
 const initialForm = {
   title: '',
@@ -15,13 +19,39 @@ const initialForm = {
 export default function AdminPanel() {
   const [form, setForm] = useState(initialForm)
   const [status, setStatus] = useState('')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [isUnlocked, setIsUnlocked] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setIsUnlocked(window.sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true')
+  }, [])
 
   const customSongs = useSongCatalog().filter(
     (song) => !seededSongs.some((seed) => seed.slug === song.slug)
   )
 
+  const unlock = (event: FormEvent) => {
+    event.preventDefault()
+
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      window.sessionStorage.setItem(ADMIN_SESSION_KEY, 'true')
+      setIsUnlocked(true)
+      setStatus('Access granted.')
+      return
+    }
+
+    setStatus('Incorrect username or password. Only the admin can add songs.')
+  }
+
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
+
+    if (!isUnlocked) {
+      setStatus('Please unlock the admin panel first.')
+      return
+    }
 
     const song = normalizeSong({
       ...form,
@@ -50,16 +80,82 @@ export default function AdminPanel() {
     setStatus(`Saved: ${song.title} from ${song.film} is now in the station.`)
   }
 
+  if (!isUnlocked) {
+    return (
+      <section
+        id="admin"
+        className="scroll-mt-20 border-t border-brass/12 px-4 py-16 sm:scroll-mt-24 sm:px-5 sm:py-20"
+      >
+        <div className="mx-auto max-w-xl rounded-2xl border border-brass/20 bg-walnut/30 p-5 sm:p-6">
+          <h2 className="font-devanagari text-2xl text-cream sm:text-4xl">एडमिन पैनल</h2>
+          <p className="mt-2 text-sm text-cream-dim">
+            This section is locked to admin access only.
+          </p>
+
+          <form onSubmit={unlock} className="mt-5 space-y-4">
+            <label className="block text-sm text-cream-dim">
+              <span className="mb-1.5 block">Username</span>
+              <input
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                placeholder="Enter admin username"
+                className="w-full rounded-lg border border-cream-dim/18 bg-ink/40 px-3 py-2.5 text-base text-cream placeholder:text-cream-dim/50 focus:border-brass/70 focus:outline-none"
+              />
+            </label>
+
+            <label className="block text-sm text-cream-dim">
+              <span className="mb-1.5 block">Password</span>
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Enter admin password"
+                className="w-full rounded-lg border border-cream-dim/18 bg-ink/40 px-3 py-2.5 text-base text-cream placeholder:text-cream-dim/50 focus:border-brass/70 focus:outline-none"
+              />
+            </label>
+
+            <button
+              type="submit"
+              className="brass-edge inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-bold text-ink transition hover:brightness-110"
+            >
+              Unlock admin panel
+            </button>
+
+            {status && <p className="text-sm text-brass-bright">{status}</p>}
+          </form>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section
       id="admin"
       className="scroll-mt-20 border-t border-brass/12 px-4 py-16 sm:scroll-mt-24 sm:px-5 sm:py-20"
     >
       <div className="mx-auto max-w-5xl">
-        <h2 className="font-devanagari text-2xl text-cream sm:text-4xl">एडमिन पैनल</h2>
-        <p className="mt-2 text-[0.84rem] text-cream-dim sm:text-sm">
-          Add a new song here. It appears in search, band filters, and the radio queue right away.
-        </p>
+        <div className="mb-5 flex items-center justify-between gap-4">
+          <div>
+            <h2 className="font-devanagari text-2xl text-cream sm:text-4xl">एडमिन पैनल</h2>
+            <p className="mt-2 text-[0.84rem] text-cream-dim sm:text-sm">
+              Add a new song here. It appears in search, band filters, and the radio queue right away.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              window.sessionStorage.removeItem(ADMIN_SESSION_KEY)
+              setIsUnlocked(false)
+              setUsername('')
+              setPassword('')
+              setStatus('Logged out.')
+            }}
+            className="rounded-full border border-cream-dim/18 px-3 py-1.5 font-mono text-[0.62rem] tracking-[0.14em] text-cream-dim uppercase transition hover:border-brass/50 hover:text-brass-bright"
+          >
+            Log out
+          </button>
+        </div>
 
         <div className="mt-7 grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
           <form onSubmit={handleSubmit} className="rounded-2xl border border-brass/20 bg-walnut/30 p-4 sm:p-5">
