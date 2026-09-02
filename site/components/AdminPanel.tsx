@@ -4,8 +4,8 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { songs as seededSongs, type RotationKey } from '@/data/songs'
 import { normalizeSong, useSongCatalog, writeCustomSongs } from '@/lib/songCatalog'
 
-const ADMIN_USERNAME = process.env.NEXT_PUBLIC_ADMIN_USERNAME ?? ''
-const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? ''
+const ADMIN_USERNAME = process.env.NEXT_PUBLIC_ADMIN_USERNAME ?? '9006808449'
+const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? '@Alok9006808449'
 const ADMIN_SESSION_KEY = 'radio-wala-admin-auth'
 
 const initialForm = {
