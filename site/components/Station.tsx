@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { songs } from '@/data/songs'
 import { liveRotation, rotations } from '@/lib/rotations'
+import { useSongCatalog } from '@/lib/songCatalog'
 import { useRadio } from './RadioProvider'
 import Player from './Player'
 
@@ -12,6 +12,7 @@ import Player from './Player'
  */
 export default function Station() {
   const { rotationKey, tune } = useRadio()
+  const songs = useSongCatalog()
   const [liveKey, setLiveKey] = useState<string | null>(null)
 
   // The live band depends on the visitor's clock, so it can only be resolved

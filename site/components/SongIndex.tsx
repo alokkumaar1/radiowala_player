@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { songs } from '@/data/songs'
 import { rotations } from '@/lib/rotations'
+import { useSongCatalog } from '@/lib/songCatalog'
 import { useRadio } from './RadioProvider'
 
 const ytMusic = (q: string) =>
@@ -15,6 +15,7 @@ const PAGE = 15
 
 export default function SongIndex() {
   const { current, playing, playSong } = useRadio()
+  const songs = useSongCatalog()
   const [query, setQuery] = useState('')
   const [band, setBand] = useState<string>('all')
   const [shown, setShown] = useState(PAGE)

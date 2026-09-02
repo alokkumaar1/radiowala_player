@@ -4,6 +4,7 @@ import SongIndex from '@/components/SongIndex'
 import LocalPlayer from '@/components/LocalPlayer'
 import MiniPlayer from '@/components/MiniPlayer'
 import PWAInstallPrompt from '@/components/PWAInstallPrompt'
+import AdminPanel from '@/components/AdminPanel'
 import { songs } from '@/data/songs'
 import { rotations } from '@/lib/rotations'
 
@@ -31,6 +32,9 @@ export default function Home() {
               </a>
               <a href="#songs" className="transition hover:text-brass-bright">
                 Songs
+              </a>
+              <a href="#admin" className="transition hover:text-brass-bright">
+                Admin
               </a>
               <a
                 href="#radio"
@@ -114,6 +118,9 @@ export default function Home() {
 
         {/* ── song index ──────────────────────────────────────────────────── */}
         <SongIndex />
+
+        {/* ── admin panel ─────────────────────────────────────────────────── */}
+        <AdminPanel />
 
         {/* ── local player ────────────────────────────────────────────────── */}
         <LocalPlayer />

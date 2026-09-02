@@ -9,13 +9,14 @@ import {
   useRef,
   useState,
 } from 'react'
-import { songs, type RotationKey, type Song } from '@/data/songs'
+import { type RotationKey, type Song } from '@/data/songs'
 import { liveRotation, rotationByKey, istClock, type Rotation } from '@/lib/rotations'
 import { FATAL_YT_ERRORS, loadYouTubeApi, type YTPlayer } from '@/lib/youtube'
 import { useMediaSession } from '@/lib/useMediaSession'
 import { useWakeLock } from '@/lib/useWakeLock'
 import { loadSession, saveSession } from '@/lib/session'
 import { liveRadio, streamingUrl, useLiveRadioStatus } from '@/lib/liveRadio'
+import { useSongCatalog } from '@/lib/songCatalog'
 
 /**
  * One playback engine, shared. The cabinet player, the mobile bottom bar and
@@ -68,8 +69,6 @@ export function useRadio(): RadioState {
   return ctx
 }
 
-const bySlug = new Map(songs.map((s) => [s.slug, s]))
-
 const shuffleArr = <T,>(arr: T[]): T[] => {
   const a = [...arr]
   for (let i = a.length - 1; i > 0; i--) {
@@ -79,13 +78,8 @@ const shuffleArr = <T,>(arr: T[]): T[] => {
   return a
 }
 
-/** Play order for a band: shuffled, or chronological when shuffle is off. */
-function orderFor(key: RotationKey, shuffle: boolean): Song[] {
-  const pool = songs.filter((s) => s.rotation === key)
-  return shuffle ? shuffleArr(pool) : [...pool].sort((a, b) => a.year - b.year)
-}
-
 export default function RadioProvider({ children }: { children: React.ReactNode }) {
+  const songs = useSongCatalog()
   // Everything clock- or random-derived starts empty and is filled after mount;
   // rendering it during the static export would guarantee a hydration mismatch.
   const [rotationKey, setRotationKey] = useState<RotationKey | null>(null)
@@ -118,6 +112,16 @@ export default function RadioProvider({ children }: { children: React.ReactNode 
   const resumeAtRef = useRef(0)
 
   const api = useCallback(() => (readyRef.current ? playerRef.current : null), [])
+
+  const bySlug = useMemo(() => new Map(songs.map((s) => [s.slug, s])), [songs])
+
+  const orderFor = useCallback(
+    (key: RotationKey, shuffle: boolean): Song[] => {
+      const pool = songs.filter((s) => s.rotation === key)
+      return shuffle ? shuffleArr(pool) : [...pool].sort((a, b) => a.year - b.year)
+    },
+    [songs]
+  )
 
   const current = queue[index]
   const rotation = rotationKey ? rotationByKey(rotationKey) : null
@@ -416,7 +420,7 @@ export default function RadioProvider({ children }: { children: React.ReactNode 
         p.loadVideoById({ videoId: song.youtubeId })
       }
     },
-    [queue, shuffle, api]
+    [queue, shuffle, api, bySlug, orderFor]
   )
 
   const seek = useCallback(
